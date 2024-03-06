@@ -1,3 +1,9 @@
+"""
+I bit this code from geeksforgeeks.com
+https://www.geeksforgeeks.org/line-detection-python-opencv-houghline-method/
+"""
+
+
 # Python program to illustrate HoughLine
 # method for line detection
 import cv2
@@ -5,7 +11,8 @@ import numpy as np
  
 
 """I need to make this into a function so that I can call it from the drone. Eventually, I need to make it so that it can see the centre of the main line.""" 
-img = cv2.imread('shapeline.png')
+# reading image 
+img = cv2.imread(r"Mac's files//shapeline.png") 
 
 
 def line_detection(img):
@@ -56,10 +63,61 @@ def line_detection(img):
         # (0,0,255) denotes the colour of the line to be
         # drawn. In this case, it is red.
         cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+
+            # setting threshold of gray image 
+    _, threshold = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY) 
+
+    # using a findContours() function 
+    contours, _ = cv2.findContours( 
+        threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) 
+
+    i = 0
+
+    # list for storing names of shapes 
+    for contour in contours: 
+
+        # here we are ignoring first counter because 
+        # findcontour function detects whole image as shape 
+        if i == 0: 
+            i = 1
+            continue
+
+        # cv2.approxPloyDP() function to approximate the shape 
+        approx = cv2.approxPolyDP( 
+            contour, 0.01 * cv2.arcLength(contour, True), True) 
+        
+        # using drawContours() function 
+        cv2.drawContours(img, [contour], 0, (0, 0, 255), 5) 
+
+        # finding center point of shape 
+        M = cv2.moments(contour) 
+        if M['m00'] != 0.0: 
+            x = int(M['m10']/M['m00']) 
+            y = int(M['m01']/M['m00']) 
+
+        # putting shape name at center of each shape 
+        if len(approx) == 3: 
+            print('turn right!')
+
+        elif len(approx) == 4: 
+            print('turn left!')
+
+        elif len(approx) > 54: 
+            print('stop')
+
     
     # All the changes made in the input image are finally
     # written on a new image houghlines.jpg
-    cv2.imwrite('detected.jpg', img)
+    cv2.imwrite('linesDetected.jpg', img)
     return print("success")
 
+
+
+
 line_detection(img)
+
+# displaying the image after drawing contours 
+cv2.imshow('shapes', img) 
+
+cv2.waitKey(0) 
+cv2.destroyAllWindows() 
